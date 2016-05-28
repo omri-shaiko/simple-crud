@@ -4,7 +4,7 @@
 module.exports = function (grunt) {
   var localConfig;
   try {
-    localConfig = require('./server/config/local.env');
+    localConfig = require('./lib/config/local.env');
   } catch(e) {
     localConfig = {};
   }
@@ -31,8 +31,8 @@ module.exports = function (grunt) {
     pkg: grunt.file.readJSON('package.json'),
     yeoman: {
       // configurable paths
-      client: require('./bower.json').appPath || 'client',
-      server: 'server',
+      client: 'client',
+      server: 'lib',
       dist: 'dist'
     },
     express: {
@@ -53,7 +53,7 @@ module.exports = function (grunt) {
     },
     open: {
       server: {
-        url: 'http://localhost:<%= express.options.port %>'
+        url: 'http://localhost:<%= express.options.port %>/api/things'
       }
     },
     watch: {
@@ -70,11 +70,11 @@ module.exports = function (grunt) {
           '<%= yeoman.client %>/{app,components}/**/!(*.spec|*.mock).js',
           '!<%= yeoman.client %>/app/app.js'
         ],
-        tasks: ['injector:scripts']
+        tasks: []
       },
       injectCss: {
         files: ['<%= yeoman.client %>/{app,components}/**/*.css'],
-        tasks: ['injector:css']
+        tasks: []
       },
       mochaTest: {
         files: ['<%= yeoman.server %>/**/*.{spec,integration}.js'],
@@ -104,10 +104,6 @@ module.exports = function (grunt) {
           livereload: true,
           spawn: false //Without this option specified express won't be reloaded
         }
-      },
-      bower: {
-        files: ['bower.json'],
-        tasks: ['wiredep']
       },
     },
 
@@ -212,24 +208,6 @@ module.exports = function (grunt) {
             });
           }
         }
-      }
-    },
-
-    // Automatically inject Bower components into the app and karma.conf.js
-    wiredep: {
-      options: {
-        exclude: [
-          '/json3/',
-          '/es5-shim/'
-        ]
-      },
-      client: {
-        src: '<%= yeoman.client %>/index.html',
-        ignorePath: '<%= yeoman.client %>/',
-      },
-      test: {
-        src: './karma.conf.js',
-        devDependencies: true
       }
     },
 
@@ -549,58 +527,6 @@ module.exports = function (grunt) {
       }
     },
 
-    injector: {
-      options: {
-
-      },
-      // Inject application script files into index.html (doesn't include bower)
-      scripts: {
-        options: {
-          transform: function(filePath) {
-            var yoClient = grunt.config.get('yeoman.client');
-            filePath = filePath.replace('/' + yoClient + '/', '');
-            filePath = filePath.replace('/.tmp/', '');
-            return '<script src="' + filePath + '"></script>';
-          },
-          sort: function(a, b) {
-            var module = /\.module\.js$/;
-            var aMod = module.test(a);
-            var bMod = module.test(b);
-            // inject *.module.js first
-            return (aMod === bMod) ? 0 : (aMod ? -1 : 1);
-          },
-          starttag: '<!-- injector:js -->',
-          endtag: '<!-- endinjector -->'
-        },
-        files: {
-          '<%= yeoman.client %>/index.html': [
-               [
-                 '.tmp/{app,components}/**/!(*.spec|*.mock).js',
-                 '!{.tmp,<%= yeoman.client %>}/app/app.js'
-               ]
-            ]
-        }
-      },
-
-      // Inject component css into index.html
-      css: {
-        options: {
-          transform: function(filePath) {
-            var yoClient = grunt.config.get('yeoman.client');
-            filePath = filePath.replace('/' + yoClient + '/', '');
-            filePath = filePath.replace('/.tmp/', '');
-            return '<link rel="stylesheet" href="' + filePath + '">';
-          },
-          starttag: '<!-- injector:css -->',
-          endtag: '<!-- endinjector -->'
-        },
-        files: {
-          '<%= yeoman.client %>/index.html': [
-            '<%= yeoman.client %>/{app,components}/**/*.css'
-          ]
-        }
-      }
-    },
   });
 
   // Used for delaying livereload until after server has restarted
@@ -630,8 +556,6 @@ module.exports = function (grunt) {
         'env:all',
         'concurrent:pre',
         'concurrent:server',
-        'injector',
-        'wiredep:client',
         'postcss',
         'concurrent:debug'
       ]);
@@ -642,8 +566,6 @@ module.exports = function (grunt) {
       'env:all',
       'concurrent:pre',
       'concurrent:server',
-      'injector',
-      'wiredep:client',
       'postcss',
       'express:dev',
       'wait',
@@ -673,9 +595,7 @@ module.exports = function (grunt) {
         'env:all',
         'concurrent:pre',
         'concurrent:test',
-        'injector',
         'postcss',
-        'wiredep:test',
         'karma'
       ]);
     }
@@ -699,8 +619,6 @@ module.exports = function (grunt) {
           'env:test',
           'concurrent:pre',
           'concurrent:test',
-          'injector',
-          'wiredep:client',
           'postcss',
           'express:dev',
           'protractor'
@@ -753,8 +671,6 @@ module.exports = function (grunt) {
     'clean:dist',
     'concurrent:pre',
     'concurrent:dist',
-    'injector',
-    'wiredep:client',
     'useminPrepare',
     'postcss',
     'ngtemplates',
