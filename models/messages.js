@@ -21,9 +21,12 @@ module.exports = {
     {
       method: 'get',
       path: '/extends',
-      middleware: auth.isAuthenticated(),
+      // middleware: auth.isAuthenticated(),
       controller: function (req, res) {
-        res.send('Hi!');
+        const Model = req.Model;
+        Model.find().then(function (e) {
+          res.send(e)
+        });
       }
     }
   ]
